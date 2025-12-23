@@ -81,9 +81,11 @@ main() {
   write_ifcfg "$IF1" "$IP1" "$PFX1" "$GW1" "$DNS11" "$DNS21"
 
   echo
-  echo "적용 방법(둘 중 하나 선택):"
-  echo "1) nmcli로 반영: nmcli connection reload && nmcli device reapply ${IF0} && nmcli device reapply ${IF1}"
-  echo "2) 재시작: systemctl restart NetworkManager"
+  echo "NetworkManager 적용 중..."
+  nmcli connection reload
+  nmcli device reapply ${IF0}
+  nmcli device reapply ${IF1}
+  echo "적용 완료"
 }
 
 main "$@"
