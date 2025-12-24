@@ -6,12 +6,14 @@ GRUB_DEF="/etc/default/grub"
 GRUB_CFG="/boot/grub2/grub.cfg"
 
 require_root() {
-  [[ "${EUID:-$(id -u)}" -eq 0 ]] || { echo "run as root"; exit 1; }
+  [[ "${EUID:-$(id -u)}" -eq 0 ]] || { echo "ERROR: run as root"; exit 1; }
 }
 
 detect_two_ifaces() {
-  mapfile -t ifs < <(ip -o link show | awk -F': ' '{print $2}' | grep -v '^lo$' | head -n 2)
-  [[ "${#ifs[@]}" -ge 2 ]] || { echo "need 2 interfaces"; exit 1; }
+  mapfile -t ifs < <(
+    ip -o link show | awk -F': ' '{print $2}' | grep -v '^lo$' | head -n 2
+  )
+  [[ "${#ifs[@]}" -ge 2 ]] || { echo "ERROR: need 2 interfaces"; exit 1; }
   echo "${ifs[0]} ${ifs[1]}"
 }
 
@@ -24,25 +26,24 @@ set_kv() {
   fi
 }
 
+# 반드시 실제 파일만 허용
 find_ifcfg_for_iface() {
   local iface="$1"
-  [[ -f "${NS_DIR}/ifcfg-${iface}" ]] && { echo "${NS_DIR}/ifcfg-${iface}"; return; }
-  grep -rlE "^\s*(DEVICE|NAME)\s*=\s*\"?${iface}\"?\s*$" \
-    "$NS_DIR"/ifcfg-* 2>/dev/null | head -n 1 || true
+  local f="${NS_DIR}/ifcfg-${iface}"
+  [[ -f "$f" ]] && echo "$f" || echo ""
 }
 
 normalize_ifcfg() {
   local src="$1" eth="$2"
   local dst="${NS_DIR}/ifcfg-${eth}"
 
-  mkdir -p "$NS_DIR"
+  [[ -n "$src" ]] || { echo "ERROR: source ifcfg missing for $eth"; exit 1; }
 
-  if [[ -n "$src" && "$src" != "$dst" ]]; then
+  if [[ "$src" != "$dst" ]]; then
     mv -f "$src" "$dst"
-  elif [[ -z "$src" ]]; then
-    : > "$dst"
   fi
 
+  # 요구사항에 맞게 값 강제 수정
   set_kv "$dst" NAME "\"${eth}\""
   set_kv "$dst" DEVICE "\"${eth}\""
   set_kv "$dst" TYPE "Ethernet"
@@ -52,8 +53,6 @@ normalize_ifcfg() {
 
 apply_nmcli_now() {
   local dev="$1"
-
-  # 기존 연결 찾기
   local con
   con="$(nmcli -t -f NAME,DEVICE connection show | awk -F: -v d="$dev" '$2==d{print $1; exit}')"
 
@@ -64,10 +63,15 @@ apply_nmcli_now() {
 }
 
 patch_grub() {
-  if grep -qE '^\s*GRUB_CMDLINE_LINUX=' "$GRUB_DEF"; then
-    sed -ri 's|^(GRUB_CMDLINE_LINUX="[^"]*)"$|\1 net.ifnames=0 biosdevname=0"|' "$GRUB_DEF"
-  else
-    echo 'GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"' >> "$GRUB_DEF"
+  if ! grep -qE '^\s*GRUB_CMDLINE_LINUX=' "$GRUB_DEF"; then
+    echo 'GRUB_CMDLINE_LINUX=""' >> "$GRUB_DEF"
+  fi
+
+  if ! grep -qE '^\s*GRUB_CMDLINE_LINUX=.*net\.ifnames=0' "$GRUB_DEF"; then
+    sed -ri 's|^(GRUB_CMDLINE_LINUX="[^"]*)"$|\1 net.ifnames=0"|' "$GRUB_DEF"
+  fi
+  if ! grep -qE '^\s*GRUB_CMDLINE_LINUX=.*biosdevname=0' "$GRUB_DEF"; then
+    sed -ri 's|^(GRUB_CMDLINE_LINUX="[^"]*)"$|\1 biosdevname=0"|' "$GRUB_DEF"
   fi
 }
 
@@ -76,28 +80,35 @@ main() {
 
   echo "[1/6] Detect interfaces"
   read -r IF0 IF1 <<<"$(detect_two_ifaces)"
-  echo " - $IF0 , $IF1"
+  echo " - detected: $IF0 , $IF1"
 
-  echo "[2/6] Prepare ifcfg-eth0/eth1"
+  echo "[2/6] Locate existing ifcfg files (both required)"
   SRC0="$(find_ifcfg_for_iface "$IF0")"
   SRC1="$(find_ifcfg_for_iface "$IF1")"
+
+  if [[ -z "$SRC0" || -z "$SRC1" ]]; then
+    echo "ERROR: both ifcfg files must exist."
+    echo " - missing for: $([[ -z "$SRC0" ]] && echo "$IF0") $([[ -z "$SRC1" ]] && echo "$IF1")"
+    exit 1
+  fi
+
+  echo "[3/6] Move ifcfg -> eth0 / eth1 and patch values"
   normalize_ifcfg "$SRC0" eth0
   normalize_ifcfg "$SRC1" eth1
 
-  echo "[3/6] Apply NetworkManager now (pre-reboot)"
+  echo "[4/6] Apply NetworkManager now (pre-reboot)"
   apply_nmcli_now "$IF0"
   apply_nmcli_now "$IF1"
 
-  echo "[4/6] Patch grub cmdline"
+  echo "[5/6] Patch grub cmdline"
   patch_grub
 
-  echo "[5/6] Regenerate grub.cfg"
+  echo "[6/6] Regenerate grub.cfg"
   grub2-mkconfig -o "$GRUB_CFG" >/dev/null
 
-  echo "[6/6] Done"
-  echo "INFO:"
-  echo "- Network config applied immediately (IP/DHCP)"
-  echo "- Interface names (eth0/eth1) take effect AFTER reboot"
+  echo "DONE."
+  echo "- Both interfaces renamed via mv (no new files created)"
+  echo "- eth0/eth1 naming effective AFTER reboot"
 }
 
 main "$@"
