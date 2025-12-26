@@ -12,9 +12,9 @@ disable_units=(
   "auditd.service"
   "chronyd.service"
   "cockpit.socket"
-  "dbus-org.fedoraproject.FirewallD1.service"
-  "dbus-org.freedesktop.nm-dispatcher.service"
-  "dbus-org.freedesktop.timedate1.service"
+#  "dbus-org.fedoraproject.FirewallD1.service"
+#  "dbus-org.freedesktop.nm-dispatcher.service"
+#  "dbus-org.freedesktop.timedate1.service"
   "dm-event.socket"
   "firewalld.service"
   "import-state.service"
@@ -45,8 +45,9 @@ enable_units=(
   "irqbalance.service"
 )
 
-apply_disable_now=true   # true면 즉시 stop도 시도 (ntsysv에서 바로 끄는 효과)
-apply_enable_now=true    # true면 즉시 start도 시도
+apply_disable_now=false   # true면 즉시 stop도 시도 (ntsysv에서 바로 끄는 효과)
+apply_enable_now=false    # true면 즉시 start도 시도
+# NOTE: enable/disable only affects next boot (no immediate start/stop)
 
 main() {
   require_root
@@ -55,7 +56,7 @@ main() {
   for u in "${enable_units[@]}"; do
     if systemctl show -p LoadState --value "$u" 2>/dev/null | grep -qx 'loaded'; then
       if $apply_enable_now; then
-        systemctl enable --now "$u"
+        systemctl enable "$u"
       else
         systemctl enable "$u"
       fi
@@ -70,7 +71,7 @@ main() {
   for u in "${disable_units[@]}"; do
     if systemctl show -p LoadState --value "$u" 2>/dev/null | grep -qx 'loaded'; then
       if $apply_disable_now; then
-        systemctl disable --now "$u" 2>/dev/null || systemctl disable "$u" || true
+        systemctl disable  "$u" 2>/dev/null || systemctl disable "$u" || true
       else
         systemctl disable "$u" || true
       fi
