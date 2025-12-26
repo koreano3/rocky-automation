@@ -15,7 +15,6 @@ main() {
 
   # base tools
   yum -y install \
-    lynx \
     whois \
     net-tools \
     lrzsz \
