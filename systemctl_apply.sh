@@ -34,6 +34,7 @@ disable_units=(
   "systemd-pstore.service"
   "timedatex.service"
   "tuned.service"
+  "nvmefc-boot-connections.service"
   "vdo.service"
 )
 
