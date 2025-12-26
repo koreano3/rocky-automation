@@ -51,40 +51,41 @@ apply_enable_now=false    # true면 즉시 start도 시도
 
 main() {
   require_root
+  ecjp
 
-  echo "== Enable =="
-  for u in "${enable_units[@]}"; do
-    if systemctl show -p LoadState --value "$u" 2>/dev/null | grep -qx 'loaded'; then
-      if $apply_enable_now; then
-        systemctl enable "$u"
-      else
-        systemctl enable "$u"
-      fi
-      echo "  enabled: $u"
-    else
-      echo "  skip (not found): $u"
-    fi
-  done
 
-  echo
-  echo "== Disable =="
-  for u in "${disable_units[@]}"; do
-    if systemctl show -p LoadState --value "$u" 2>/dev/null | grep -qx 'loaded'; then
-      if $apply_disable_now; then
-        systemctl disable  "$u" 2>/dev/null || systemctl disable "$u" || true
-      else
-        systemctl disable "$u" || true
-      fi
-      echo "  disabled: $u"
-    else
-      echo "  skip (not found): $u"
-    fi
-  done
+echo "== Enable =="
+for u in "${enable_units[@]}"; do
+  if systemctl show -p LoadState --value "$u" 2>/dev/null | grep -qx 'loaded'; then
+    # --now를 쓰지 않기로 했으니 enable만 수행 (재부팅 시 적용)
+    systemctl enable "$u" 2>/dev/null || true
+    echo "  enabled: $u"
+  else
+    echo "  skip (not found): $u"
+  fi
+done
+
 
   echo
-  echo "== Verify (enabled) =="
-  systemctl list-unit-files --type=service --state=enabled --no-legend | awk '{print "  " $1}'
-  systemctl list-unit-files --type=socket  --state=enabled --no-legend | awk '{print "  " $1}'
+echo "== Disable =="
+for u in "${disable_units[@]}"; do
+  if systemctl show -p LoadState --value "$u" 2>/dev/null | grep -qx 'loaded'; then
+    # --now를 쓰지 않기로 했으니 disable만 수행 (재부팅 시 적용)
+    systemctl disable "$u" 2>/dev/null || true
+    echo "  disabled: $u"
+  else
+    echo "  skip (not found): $u"
+  fi
+done
+
+  echo "== Verify (targets) =="
+for u in "${enable_units[@]}"; do
+  printf "  %-35s : %s\n" "$u" "$(systemctl is-enabled "$u" 2>/dev/null || echo not-found)"
+done
+for u in "${disable_units[@]}"; do
+  printf "  %-35s : %s\n" "$u" "$(systemctl is-enabled "$u" 2>/dev/null || echo not-found)"
+done
+
 }
 
 main "$@"
