@@ -78,11 +78,11 @@ patch_grub() {
 main() {
   require_root
 
-  echo "[1/6] Detect interfaces"
+  echo "[1/5] Detect interfaces"
   read -r IF0 IF1 <<<"$(detect_two_ifaces)"
   echo " - detected: $IF0 , $IF1"
 
-  echo "[2/6] Locate existing ifcfg files (both required)"
+  echo "[2/5] Locate existing ifcfg files (both required)"
   SRC0="$(find_ifcfg_for_iface "$IF0")"
   SRC1="$(find_ifcfg_for_iface "$IF1")"
 
@@ -92,18 +92,14 @@ main() {
     exit 1
   fi
 
-  echo "[3/6] Move ifcfg -> eth0 / eth1 and patch values"
+  echo "[3/5] Move ifcfg -> eth0 / eth1 and patch values"
   normalize_ifcfg "$SRC0" eth0
   normalize_ifcfg "$SRC1" eth1
 
-  echo "[4/6] Apply NetworkManager now (pre-reboot)"
-  apply_nmcli_now "$IF0"
-  apply_nmcli_now "$IF1"
-
-  echo "[5/6] Patch grub cmdline"
+  echo "[4/5] Patch grub cmdline"
   patch_grub
 
-  echo "[6/6] Regenerate grub.cfg"
+  echo "[5/5] Regenerate grub.cfg"
   grub2-mkconfig -o "$GRUB_CFG" >/dev/null
 
   echo "DONE."
