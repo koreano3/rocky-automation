@@ -11,13 +11,13 @@ require_root() {
 require_root
 
 scripts=(
-  fix_var_tmp_symlink.sh
-  iptables_clear.sh
   patch_fstab_discard.sh
   SELinux_disabled.sh
+  fix_var_tmp_symlink.sh
+  iptables_clear.sh
   set_eth_ifcfg_and_grub.sh
-  systemctl_apply_then_update.sh
   install_base_pkgs.sh
+  systemctl_apply_then_update.sh
   make_ifcfg.sh
 )
 
