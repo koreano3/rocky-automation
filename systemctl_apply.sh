@@ -31,7 +31,6 @@ disable_units=(
   "smartd.service"
   "sssd-kcm.socket"
   "sssd.service"
-
   "systemd-pstore.service"
   "timedatex.service"
   "tuned.service"
@@ -53,7 +52,7 @@ main() {
 
   echo "== Enable =="
   for u in "${enable_units[@]}"; do
-    if systemctl list-unit-files | awk '{print $1}' | grep -qx "$u"; then
+    if systemctl show -p LoadState --value "$u" 2>/dev/null | grep -qx 'loaded'; then
       if $apply_enable_now; then
         systemctl enable --now "$u"
       else
@@ -68,7 +67,7 @@ main() {
   echo
   echo "== Disable =="
   for u in "${disable_units[@]}"; do
-    if systemctl list-unit-files | awk '{print $1}' | grep -qx "$u"; then
+    if systemctl show -p LoadState --value "$u" 2>/dev/null | grep -qx 'loaded'; then
       if $apply_disable_now; then
         systemctl disable --now "$u" 2>/dev/null || systemctl disable "$u" || true
       else
