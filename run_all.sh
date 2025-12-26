@@ -14,12 +14,11 @@ scripts=(
   fix_var_tmp_symlink.sh
   install_base_pkgs.sh
   iptables_clear.sh
-  make_ifcfg.sh
+  #make_ifcfg.sh
   patch_fstab_discard.sh
   SELinux_disabled.sh
   set_eth_ifcfg_and_grub.sh
-  systemctl_apply.sh
-  systemctl_apply_then_update
+  systemctl_apply_then_update.sh
 )
 
 for s in "${scripts[@]}"; do
