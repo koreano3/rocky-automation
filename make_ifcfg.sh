@@ -7,7 +7,7 @@ IF0="eth0"
 IF1="eth1"
 
 require_root() {
-  if [[ $EUID -ne 0 ]]; then
+  if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
     echo "root로 실행해야 함 (sudo 사용)."
     exit 1
   fi
@@ -24,14 +24,12 @@ write_ifcfg() {
   local dev="$1"
   local ip="$2"
   local netmask="$3"
-  local gw="$4"      # 빈 값 허용
-  local dns1="$5"    # 빈 값 허용
-  local dns2="$6"    # 빈 값 허용
+  local gw="$4"
+  local dns1="$5"
+  local dns2="$6"
   local path="${DIR}/ifcfg-${dev}"
 
-  local uuid
-  uuid=$(cat /proc/sys/kernel/random/uuid)
-
+  # heredoc에 빈 줄 절대 넣지 않기!
   cat > "$path" <<EOF
 TYPE=Ethernet
 BOOTPROTO=none
@@ -41,18 +39,11 @@ DEVICE=${dev}
 ONBOOT=yes
 IPADDR=${ip}
 NETMASK=${netmask}
-
 EOF
 
-  if [[ -n "$gw" ]]; then
-    echo "GATEWAY=${gw}" >> "$path"
-  fi
-  if [[ -n "$dns1" ]]; then
-    echo "DNS1=${dns1}" >> "$path"
-  fi
-  if [[ -n "$dns2" ]]; then
-    echo "DNS2=${dns2}" >> "$path"
-  fi
+  [[ -n "$gw"   ]] && echo "GATEWAY=${gw}" >> "$path"
+  [[ -n "$dns1" ]] && echo "DNS1=${dns1}" >> "$path"
+  [[ -n "$dns2" ]] && echo "DNS2=${dns2}" >> "$path"
 
   echo "생성됨: $path"
 }
@@ -72,7 +63,6 @@ main() {
   echo "[${IF1}] 설정 입력"
   IP1=$(ask "IPADDR (예: 10.0.0.10)")
   MASK1=$(ask "NETMASK (예: 255.255.255.0)")
-  # 보통 eth1은 게이트웨이 비우고(DEFROUTE=no) 내부망만 두는 경우 많음
   GW1=$(ask "GATEWAY (보통 비움, 없으면 엔터)")
   DNS11=$(ask "DNS1 (없으면 엔터)")
   DNS21=$(ask "DNS2 (없으면 엔터)")
@@ -83,8 +73,8 @@ main() {
   echo
   echo "NetworkManager 적용 중..."
   nmcli connection reload
-  nmcli device reapply ${IF0}
-  nmcli device reapply ${IF1}
+  nmcli device reapply "${IF0}" || true
+  nmcli device reapply "${IF1}" || true
   echo "적용 완료"
 }
 
