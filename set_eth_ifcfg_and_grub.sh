@@ -17,6 +17,12 @@ detect_two_ifaces() {
   echo "${ifs[0]} ${ifs[1]}"
 }
 
+
+remove_key() {
+  local file="$1" key="$2"
+  sed -ri "/^\s*${key}\s*=/d" "$file"
+}
+
 set_kv() {
   local file="$1" key="$2" value="$3"
   if grep -qE "^\s*${key}\s*=" "$file"; then
@@ -42,6 +48,9 @@ normalize_ifcfg() {
   if [[ "$src" != "$dst" ]]; then
     mv -f "$src" "$dst"
   fi
+
+  # UUID 제거 (중요)
+  remove_key "$dst" UUID
 
   # 요구사항에 맞게 값 강제 수정
   set_kv "$dst" NAME "\"${eth}\""
@@ -95,6 +104,8 @@ main() {
   echo "[3/5] Move ifcfg -> eth0 / eth1 and patch values"
   normalize_ifcfg "$SRC0" eth0
   normalize_ifcfg "$SRC1" eth1
+
+
 
   echo "[4/5] Patch grub cmdline"
   patch_grub
