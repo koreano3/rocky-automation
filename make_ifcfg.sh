@@ -77,8 +77,8 @@ main() {
   DNS11=$(ask "DNS1 (없으면 엔터)")
   DNS21=$(ask "DNS2 (없으면 엔터)")
 
-  write_ifcfg "$IF0" "$IP0" "$PFX0" "$GW0" "$DNS10" "$DNS20"
-  write_ifcfg "$IF1" "$IP1" "$PFX1" "$GW1" "$DNS11" "$DNS21"
+  write_ifcfg "$IF0" "$IP0" "$MASK0" "$GW0" "$DNS10" "$DNS20"
+  write_ifcfg "$IF1" "$IP1" "$MASK1" "$GW1" "$DNS11" "$DNS21"
 
   echo
   echo "NetworkManager 적용 중..."
