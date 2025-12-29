@@ -6,7 +6,7 @@ set -euo pipefail
 
 echo "[STAGE2] run make_ifcfg.sh"
 
-bash /rocky-automation/make_ifcfg.sh
+bash /root/rocky-automation/make_ifcfg.sh
 
 echo "[STAGE2] cleanup systemd service"
 

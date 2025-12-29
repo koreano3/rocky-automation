@@ -10,7 +10,7 @@ require_root() {
 
 require_root
 
-BASE_DIR="/rocky-automation"
+BASE_DIR="/root/rocky-automation"
 SERVICE_NAME="rocky-automation-stage2.service"
 SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}"
 
