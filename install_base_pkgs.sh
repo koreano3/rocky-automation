@@ -40,10 +40,6 @@ main() {
   systemctl enable sshd.service
 
   echo
-  echo "== yum update =="
-  yum -y update
-
-  echo
   echo "DONE: install_base_pkgs.sh"
 }
 
