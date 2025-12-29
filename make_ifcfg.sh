@@ -71,11 +71,7 @@ main() {
   write_ifcfg "$IF1" "$IP1" "$MASK1" "$GW1" "$DNS11" "$DNS21"
 
   echo
-  echo "NetworkManager 적용 중..."
-  nmcli connection reload
-  nmcli device reapply "${IF0}" || true
-  nmcli device reapply "${IF1}" || true
-  echo "적용 완료"
+  echo "done. reboot recommended to apply network settings."
 }
 
 main "$@"
