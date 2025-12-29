@@ -23,7 +23,7 @@ ask() {
 write_ifcfg() {
   local dev="$1"
   local ip="$2"
-  local prefix="$3"
+  local netmask="$3"
   local gw="$4"      # 빈 값 허용
   local dns1="$5"    # 빈 값 허용
   local dns2="$6"    # 빈 값 허용
@@ -39,9 +39,9 @@ DEFROUTE=$( [[ -n "$gw" ]] && echo "yes" || echo "no" )
 NAME=${dev}
 DEVICE=${dev}
 ONBOOT=yes
-UUID=${uuid}
 IPADDR=${ip}
-PREFIX=${prefix}
+NETMASK=${netmask}
+
 EOF
 
   if [[ -n "$gw" ]]; then
@@ -63,7 +63,7 @@ main() {
 
   echo "[${IF0}] 설정 입력"
   IP0=$(ask "IPADDR (예: 192.168.10.10)")
-  PFX0=$(ask "PREFIX (예: 24)")
+  MASK0=$(ask "NETMASK (예: 255.255.255.0)")
   GW0=$(ask "GATEWAY (없으면 엔터)")
   DNS10=$(ask "DNS1 (없으면 엔터)")
   DNS20=$(ask "DNS2 (없으면 엔터)")
@@ -71,7 +71,7 @@ main() {
   echo
   echo "[${IF1}] 설정 입력"
   IP1=$(ask "IPADDR (예: 10.0.0.10)")
-  PFX1=$(ask "PREFIX (예: 24)")
+  MASK1=$(ask "NETMASK (예: 255.255.255.0)")
   # 보통 eth1은 게이트웨이 비우고(DEFROUTE=no) 내부망만 두는 경우 많음
   GW1=$(ask "GATEWAY (보통 비움, 없으면 엔터)")
   DNS11=$(ask "DNS1 (없으면 엔터)")
