@@ -27,13 +27,14 @@ for s in "${scripts[@]}"; do
   echo " RUN: $s"
   echo "=============================="
 
-  if [[ -x "./$s" ]]; then
-    "./$s"
+  if [[ -f "$s" ]]; then
+    bash "$s"
   else
-    echo "ERROR: $s not found or not executable"
+    echo "ERROR: $s not found"
     exit 1
   fi
 done
+
 
 echo
 echo "ALL SCRIPTS COMPLETED SUCCESSFULLY"
