@@ -10,7 +10,7 @@ require_root() {
 
 require_root
 
-BASE_DIR="/root/rocky-automation"
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 SERVICE_NAME="rocky-automation-stage2.service"
 SERVICE_PATH="/etc/systemd/system/${SERVICE_NAME}"
 
@@ -52,7 +52,7 @@ if [[ ! -f "${BASE_DIR}/run_stage2.sh" ]]; then
   exit 1
 fi
 
-# 3️⃣ systemd stage2 서비스 생성
+# 3️⃣ systemd stage2 서비스 생성 (수정된 버전)
 cat > "$SERVICE_PATH" <<EOF
 [Unit]
 Description=Rocky automation stage2 (post-reboot)
@@ -61,6 +61,8 @@ Wants=NetworkManager.service
 
 [Service]
 Type=oneshot
+# [중요] 스크립트가 실행될 기본 위치를 지정합니다.
+WorkingDirectory=${BASE_DIR}
 ExecStart=/usr/bin/env bash ${BASE_DIR}/run_stage2.sh
 RemainAfterExit=yes
 
@@ -70,6 +72,9 @@ EOF
 
 systemctl daemon-reload
 systemctl enable "$SERVICE_NAME"
+systemctl disable rocky-automation-stage2.service
+rm -f /etc/systemd/system/rocky-automation-stage2.service
+systemctl daemon-reload
 
 echo
 echo "STAGE1 완료"
