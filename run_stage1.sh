@@ -20,8 +20,8 @@ scripts_stage1=(
   fix_var_tmp_symlink.sh
   iptables_clear.sh
   set_eth_ifcfg_and_grub.sh
-  #install_base_pkgs.sh
-  #systemctl_apply_then_update.sh
+  install_base_pkgs.sh
+  systemctl_apply_then_update.sh
 )
 
 run_script() {
