@@ -72,9 +72,7 @@ EOF
 
 systemctl daemon-reload
 systemctl enable "$SERVICE_NAME"
-systemctl disable rocky-automation-stage2.service
-rm -f /etc/systemd/system/rocky-automation-stage2.service
-systemctl daemon-reload
+
 
 echo
 echo "STAGE1 완료"
